@@ -117,7 +117,7 @@ export default defineAddon({
           body: JSON.stringify({ ...result, requestId: command.requestId }),
         });
       } catch {
-        // HyprPet opens the local endpoint only while a command is waiting.
+        // Pet opens the local endpoint only while a command is waiting.
       } finally {
         if (!api.signal.aborted) api.setTimeout(tick, 1200);
       }

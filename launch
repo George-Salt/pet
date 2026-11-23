@@ -3,7 +3,7 @@ set -euo pipefail
 cd -- "$(dirname -- "$(realpath -- "${BASH_SOURCE[0]}")")"
 case "${1:-}" in
     --yandex-track|--yandex-track=*|--yandex-wave|--yandex-search|--yandex-search=*|--yandex-artist|--yandex-artist=*|--yandex-favorites)
-        exec /usr/bin/python3 -m hyprpet.yandex "$@"
+        exec /usr/bin/python3 -m pet.yandex "$@"
         ;;
 esac
-exec /usr/bin/python3 -m hyprpet "$@"
+exec /usr/bin/python3 -m pet "$@"

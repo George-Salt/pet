@@ -8,13 +8,13 @@ Use the [issue forms](https://github.com/George-Salt/pet/issues/new/choose) for 
 
 Install the [system dependencies](README.md#system-dependencies) and run `./launch` from your checkout. If an installed copy is already running, close it with `pet --quit` before launching your checkout.
 
-- `hyprpet/` contains the GTK overlay, audio controls, voice recognition, and local music bridge.
+- `pet/` contains the GTK overlay, audio controls, voice recognition, and local music bridge.
 - `pulsesync-addon/` contains the optional Yandex Music integration.
 
 Run the checks that apply to your changes:
 
 ```bash
-python3 -m compileall -q hyprpet install
+python3 -m compileall -q pet install
 for script in launch setup-voice setup-pulsesync; do bash -n "$script"; done
 for script in pulsesync-addon/vite.config.js pulsesync-addon/src/*.js; do node --check "$script"; done
 ```

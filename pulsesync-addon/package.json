@@ -1,5 +1,5 @@
 {
-  "name": "hyprpet-pulsesync-addon",
+  "name": "pet-pulsesync-addon",
   "private": true,
   "type": "module",
   "scripts": {"build": "vite build"},

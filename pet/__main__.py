@@ -40,11 +40,11 @@ BLUR_RULE = (
 POSITION_FILE = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / NAMESPACE / "positions.json"
 PREFERENCES_FILE = POSITION_FILE.with_name("preferences.json")
 COMMANDS = {
-    "quieter": [sys.executable, "-m", "hyprpet.audio", "quieter"],
-    "louder": [sys.executable, "-m", "hyprpet.audio", "louder"],
-    "yandex-wave": [sys.executable, "-m", "hyprpet.yandex", "--yandex-wave"],
-    "yandex-favorites": [sys.executable, "-m", "hyprpet.yandex", "--yandex-favorites"],
-    "yandex-jealous": [sys.executable, "-m", "hyprpet.yandex", "--yandex-track", "150139411:41528093"],
+    "quieter": [sys.executable, "-m", "pet.audio", "quieter"],
+    "louder": [sys.executable, "-m", "pet.audio", "louder"],
+    "yandex-wave": [sys.executable, "-m", "pet.yandex", "--yandex-wave"],
+    "yandex-favorites": [sys.executable, "-m", "pet.yandex", "--yandex-favorites"],
+    "yandex-jealous": [sys.executable, "-m", "pet.yandex", "--yandex-track", "150139411:41528093"],
 }
 PLAYER_ACTIONS = {"previous", "play-pause", "next", "pause", "play"}
 FEEDBACK = {**ACTIONS, "play": "Воспроизведение", "pause": "Пауза", "yandex-jealous": "Jealous"}
@@ -781,7 +781,7 @@ class PetApp(Gtk.Application):
             return
         try:
             process = Gio.Subprocess.new(
-                [str(voice.PYTHON), "-m", "hyprpet.voice"], Gio.SubprocessFlags.STDOUT_PIPE,
+                [str(voice.PYTHON), "-m", "pet.voice"], Gio.SubprocessFlags.STDOUT_PIPE,
             )
         except GLib.Error:
             self.say(None, "Распознавание недоступно")
@@ -845,7 +845,7 @@ class PetApp(Gtk.Application):
                     options = [f"--alternative={name}" for name in alternatives[:2] if isinstance(name, str)]
                 action = f"yandex-{kind}"
                 self.run_control(None, action,
-                                 [sys.executable, "-m", "hyprpet.yandex", f"--{action}={query}", *options],
+                                 [sys.executable, "-m", "pet.yandex", f"--{action}={query}", *options],
                                  self.voice_cycle)
 
     def stop(self):

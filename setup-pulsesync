@@ -2,7 +2,7 @@
 set -euo pipefail
 cd -- "$(dirname -- "$(realpath -- "${BASH_SOURCE[0]}")")"
 umask 077
-token=$(/usr/bin/python3 -m hyprpet.yandex --create-token)
+token=$(/usr/bin/python3 -m pet.yandex --create-token)
 build=$(mktemp -d)
 trap 'rm -rf -- "$build"' EXIT
 target=${XDG_CONFIG_HOME:-"$HOME/.config"}/PulseSync/addons/hyprpet-music

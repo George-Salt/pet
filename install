@@ -59,7 +59,7 @@ def install_project():
     try:
         for name in FILES:
             shutil.copy2(SOURCE / name, release / name)
-        shutil.copytree(SOURCE / "hyprpet", release / "hyprpet",
+        shutil.copytree(SOURCE / "pet", release / "pet",
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         shutil.copytree(SOURCE / "pulsesync-addon", release / "pulsesync-addon",
                         ignore=shutil.ignore_patterns("node_modules", "dist"))
