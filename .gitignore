@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+pulsesync-addon/node_modules/
+pulsesync-addon/dist/
+
+.env
+.env.*
+*.log
+pulsesync-token

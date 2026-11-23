@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+"""Install Pet and its desktop launcher for the current Linux user."""
+import argparse
+import os
+from pathlib import Path
+import shlex
+import shutil
+import subprocess
+import sys
+import tempfile
+
+MARKER = "# Installed by Pet"
+SOURCE = Path(__file__).resolve().parent
+HOME = Path.home()
+DATA = Path(os.environ.get("XDG_DATA_HOME") or HOME / ".local/share")
+BIN = HOME / ".local/bin"
+DESKTOP_NAME = "io.github.hyprpet.Overlay.desktop"
+FILES = ("launch", "setup-voice", "setup-pulsesync", "README.md", "README.ru.md", "LICENSE")
+SYSTEM_PYTHON = "/usr/bin/python3"
+
+
+def check_destination(path, legacy):
+    if path.is_symlink():
+        raise RuntimeError(f"Уже существует ссылка {path}. Оставил её без изменений.")
+    if path.exists():
+        current = path.read_text()
+        if MARKER not in current and not all(pattern in current for pattern in legacy):
+            raise RuntimeError(f"Файл {path} уже используется другим приложением.")
+
+
+def replace_text(path, contents, mode):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile("w", dir=path.parent, delete=False) as temp:
+        temporary = Path(temp.name)
+        temp.write(contents)
+    try:
+        temporary.chmod(mode)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def install_project():
+    legacy_path = str(SOURCE / "launch")
+    command = BIN / "pet"
+    desktop = DATA / "applications" / DESKTOP_NAME
+    check_destination(command, ("HyprPet: файл запуска не найден", "setsid", "/launch"))
+    check_destination(desktop, (f"Exec={legacy_path}", "Name=HyprPet"))
+
+    root = DATA / "pet"
+    releases = root / "releases"
+    releases.mkdir(parents=True, exist_ok=True)
+    current = root / "current"
+    if current.exists() and not current.is_symlink():
+        raise RuntimeError(f"Не удалось использовать {current}: путь занят.")
+
+    release = Path(tempfile.mkdtemp(prefix="app-", dir=releases))
+    next_link = root / (release.name + ".new")
+    try:
+        for name in FILES:
+            shutil.copy2(SOURCE / name, release / name)
+        shutil.copytree(SOURCE / "hyprpet", release / "hyprpet",
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        shutil.copytree(SOURCE / "pulsesync-addon", release / "pulsesync-addon",
+                        ignore=shutil.ignore_patterns("node_modules", "dist"))
+        for name in ("launch", "setup-voice", "setup-pulsesync"):
+            (release / name).chmod(0o755)
+        next_link.symlink_to(release.relative_to(root), target_is_directory=True)
+        next_link.replace(current)
+    finally:
+        next_link.unlink(missing_ok=True)
+        if current.resolve() != release:
+            shutil.rmtree(release)
+
+    launcher = shlex.quote(str(current / "launch"))
+    wrapper = f'''#!/usr/bin/env bash
+{MARKER}
+set -euo pipefail
+launcher={launcher}
+if (( $# )); then
+    exec "$launcher" "$@"
+fi
+state_dir=${{XDG_STATE_HOME:-"$HOME/.local/state"}}/pet
+mkdir -p -- "$state_dir"
+exec setsid --fork -- "$launcher" </dev/null >>"$state_dir/pet.log" 2>&1
+'''
+    escaped_command = str(command).replace("\\", "\\\\").replace('"', '\\"').replace("$", "\\$").replace("`", "\\`").replace("%", "%%")
+    launcher_entry = f'''{MARKER}
+[Desktop Entry]
+Type=Application
+Name=Pet
+Comment=Пэт для рабочего стола
+Exec="{escaped_command}"
+Icon=face-smile-symbolic
+Terminal=false
+Categories=Utility;
+Actions=Quit;
+
+[Desktop Action Quit]
+Name=Закрыть Pet
+Exec="{escaped_command}" --quit
+'''
+    replace_text(command, wrapper, 0o755)
+    replace_text(desktop, launcher_entry, 0o644)
+    print(f"Pet установлен. Команда запуска: {command}")
+    if str(BIN) not in os.get_exec_path():
+        print(f"Добавь {BIN} в PATH, чтобы вызывать команду как pet.")
+    return current
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--voice", action="store_true", help="установить русскую и английскую модели")
+    args = parser.parse_args()
+    if not shutil.which("setsid"):
+        sys.exit("Для запуска в фоне нужен setsid из util-linux.")
+    probe = subprocess.run([SYSTEM_PYTHON, "-c", 'import gi, cairo; gi.require_version("Gtk", "3.0"); '
+                            'gi.require_foreign("cairo"); from gi.repository import Gtk'],
+                           capture_output=True)
+    if probe.returncode:
+        sys.exit("Установи GTK 3, Python GObject и Python Cairo. Пакеты перечислены в README.md.")
+    try:
+        installed = install_project()
+        if args.voice:
+            subprocess.run([str(installed / "setup-voice")], check=True)
+    except (OSError, RuntimeError, subprocess.CalledProcessError) as exc:
+        sys.exit(f"Pet: {exc}")
+
+
+if __name__ == "__main__":
+    main()

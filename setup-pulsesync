@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(dirname -- "$(realpath -- "${BASH_SOURCE[0]}")")"
+umask 077
+token=$(/usr/bin/python3 -m hyprpet.yandex --create-token)
+build=$(mktemp -d)
+trap 'rm -rf -- "$build"' EXIT
+target=${XDG_CONFIG_HOME:-"$HOME/.config"}/PulseSync/addons/hyprpet-music
+npm --prefix pulsesync-addon install --ignore-scripts --no-audit --no-fund --no-package-lock
+HYPRPET_PULSESYNC_TOKEN="$token" HYPRPET_ADDON_OUTPUT="$build" npm --prefix pulsesync-addon run build
+/usr/bin/python3 - "$build" "$target" <<'PY'
+from pathlib import Path
+import shutil
+import sys
+import json
+from urllib.error import URLError
+from urllib.request import Request, urlopen
+
+build, target = map(Path, sys.argv[1:])
+source = next(path.parent for path in build.rglob("metadata.json"))
+metadata = json.loads((source / "metadata.json").read_text())
+if target.exists():
+    current = json.loads((target / "metadata.json").read_text())
+    if current.get("id") != metadata["id"] or current.get("installSource") == "store":
+        sys.exit("Имя каталога аддона уже используется.")
+target.mkdir(parents=True, exist_ok=True, mode=0o700)
+for path in source.iterdir():
+    if path.is_file():
+        part = target / (path.name + ".new")
+        shutil.copyfile(path, part)
+        part.chmod(0o600)
+        part.replace(target / path.name)
+print(f"Pet Music установлен в {target}")
+try:
+    reload = Request(
+        "http://127.0.0.1:2007/dev/addons/reload?directory=hyprpet-music",
+        method="POST", headers={"X-PulseSync-Addon-Dev": "1"},
+    )
+    with urlopen(reload, timeout=2) as response:
+        result = json.load(response)
+    if result.get("enabled") and result.get("recipients"):
+        print("Аддон подключён к запущенной Яндекс Музыке.")
+    else:
+        print("Аддон установлен. Для управления нужны запущенные PulseSync и Яндекс Музыка.")
+except (OSError, URLError, ValueError):
+    print("Аддон установлен. PulseSync подхватит его при подключении.")
+PY

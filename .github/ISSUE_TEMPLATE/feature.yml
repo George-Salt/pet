@@ -1,0 +1,17 @@
+name: "Feature request / Предложение"
+description: "Suggest an improvement to Pet."
+labels: [enhancement]
+body:
+  - type: textarea
+    id: use_case
+    attributes:
+      label: "Use case / Сценарий"
+      description: "What would you like to do with Pet?"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "Proposed behavior / Как это должно работать"
+    validations:
+      required: true

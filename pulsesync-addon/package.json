@@ -1,0 +1,10 @@
+{
+  "name": "hyprpet-pulsesync-addon",
+  "private": true,
+  "type": "module",
+  "scripts": {"build": "vite build"},
+  "devDependencies": {
+    "@pulsesync/addon-sdk": "0.20.3",
+    "vite": "8.3.8"
+  }
+}

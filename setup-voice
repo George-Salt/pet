@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+data=${XDG_DATA_HOME:-"$HOME/.local/share"}/hyprpet
+mkdir -p -- "$data"
+if [[ ! -x "$data/voice/bin/python" ]]; then
+    "${PET_VOICE_PYTHON:-${HYPRPET_VOICE_PYTHON:-/usr/bin/python3}}" -m venv "$data/voice"
+fi
+if ! "$data/voice/bin/python" -c 'import vosk' >/dev/null 2>&1; then
+    "$data/voice/bin/python" -m pip install --disable-pip-version-check 'vosk==0.3.45'
+fi
+for model in vosk-model-small-ru-0.22 vosk-model-small-en-us-0.15; do
+    if [[ ! -f "$data/$model/am/final.mdl" ]]; then
+        (
+            tmp=$(mktemp -d "$data/download.XXXXXXXX")
+            trap 'rm -rf -- "$tmp"' EXIT
+            curl --fail --location --retry 2 --output "$tmp/model.zip" \
+                "https://alphacephei.com/vosk/models/$model.zip"
+            unzip -q "$tmp/model.zip" -d "$tmp"
+            mv -T -- "$tmp/$model" "$data/$model"
+        )
+    fi
+done
+printf '%s\n' 'Русская и английская модели Vosk готовы.'

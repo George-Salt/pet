@@ -1,0 +1,30 @@
+name: "Bug report / Ошибка"
+description: "Report a reproducible problem with Pet."
+labels: [bug]
+body:
+  - type: input
+    id: environment
+    attributes:
+      label: "Environment / Окружение"
+      description: "Linux distribution, desktop or compositor, Wayland or X11, and Pet revision."
+      placeholder: "CachyOS, Hyprland, Wayland, commit abc1234"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: "Steps to reproduce / Как воспроизвести"
+      description: "Include the voice phrase or terminal command if relevant."
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: "Expected and actual behavior / Ожидание и результат"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs or screenshot / Логи или скриншот"
+      description: "Remove tokens, account details, and other personal information before posting."
